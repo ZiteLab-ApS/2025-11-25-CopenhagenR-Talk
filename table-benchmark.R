@@ -99,15 +99,18 @@ results_list[["4_Create_Column"]] <- clean_results(bm_mutate, "Creating Column")
 dt[, gpm := NULL] 
 
 
-# --- Benchmark 5: Summarizing by Group ---
+# --- Benchmark 5: Summarizing all columns by group (MAX) ---
+# NOTE: The Tidyverse code (summarise_each) is replaced with the functional 
+# equivalent (summarise(across(everything()))) as the original function is 
+# deprecated, ensuring the benchmark runs correctly.
+print("Benchmarking: Summarizing All Columns by Group (MAX)")
 bm_aggregate <- microbenchmark(
-  baseR      = aggregate(hp ~ cyl, data = df, FUN = mean),
-  tidyverse  = tb %>% group_by(cyl) %>% summarise(mean_hp = mean(hp), .groups = 'drop'),
-  datatable  = dt[ , .(mean_hp = mean(hp)), by = cyl],
+  baseR      = aggregate(df, list(df$cyl), max),
+  tidyverse  = tb %>% group_by(cyl) %>% summarise(across(everything(), max), .groups = 'drop'),
+  datatable  = dt[ , lapply(.SD, max), by = cyl ],
   times = N_TIMES
 )
-results_list[["5_Grouped_Summary"]] <- clean_results(bm_aggregate, "Grouped Summary")
-
+results_list[["5_Grouped_Summary_All_Cols"]] <- clean_results(bm_aggregate, "Summarizing All Columns by Group (MAX)")
 
 # ==============================================================================
 # 4. EXPORT TO EXCEL
